@@ -1,18 +1,14 @@
 // ============================================================
-// CareerPilot — TypeScript Type Definitions
+// CareerPilot v2 — TypeScript Type Definitions
 // ============================================================
 // 
-// Shared types for:
-// - User profile
-// - CV sections and chunks
-// - Job listings
-// - Application statuses
-// - Chat messages
-// - Roadmap structure
+// Uses Firebase Auth + Firestore + Gemini
 // ============================================================
 
 export type UserId = string;
 export type CVId = string;
+
+// ── Profile ────────────────────────────────────────────────────────────────
 
 export interface Profile {
   id: string;
@@ -22,6 +18,8 @@ export interface Profile {
   target_location: string | null;
   created_at: string;
 }
+
+// ── CV ─────────────────────────────────────────────────────────────────────
 
 export interface CV {
   id: string;
@@ -38,6 +36,7 @@ export interface CV {
   uploaded_at: string;
 }
 
+// CV Chunk with 768-dim Gemini embedding
 export interface CVChunk {
   id: string;
   user_id: string;
@@ -45,8 +44,10 @@ export interface CVChunk {
   section: 'summary' | 'experience' | 'education' | 'skills' | 'projects';
   chunk_index: number;
   content: string;
-  metadata: Record<string, unknown>;
+  embedding: number[]; // 768-dim Gemini text-embedding-004
 }
+
+// ── Jobs (Adzuna API) ──────────────────────────────────────────────────────
 
 export interface Job {
   job_id: string;
@@ -60,7 +61,10 @@ export interface Job {
   job_min_salary?: number;
   job_max_salary?: number;
   job_employment_type: string;
+  fit_score?: FitScoreResult;
 }
+
+// ── Applications ──────────────────────────────────────────────────────────
 
 export type ApplicationStatus = 'applied' | 'interviewing' | 'offer' | 'rejected';
 
@@ -79,6 +83,8 @@ export interface Application {
   created_at: string;
   updated_at: string;
 }
+
+// ── Goals & Todos ─────────────────────────────────────────────────────────
 
 export type TodoPriority = 'low' | 'medium' | 'high';
 export type GoalCategory = 'apply' | 'learn' | 'cv' | 'general';
@@ -105,6 +111,8 @@ export interface Todo {
   created_at: string;
 }
 
+// ── Chat ───────────────────────────────────────────────────────────────────
+
 export interface ChatSession {
   id: string;
   user_id: string;
@@ -121,6 +129,8 @@ export interface ChatMessage {
   rag_chunks_used: CVChunk[];
   created_at: string;
 }
+
+// ── Roadmap ────────────────────────────────────────────────────────────────
 
 export interface Roadmap {
   id: string;
@@ -139,8 +149,10 @@ export interface RoadmapWeek {
   milestone: string;
 }
 
+// ── AI Analysis ───────────────────────────────────────────────────────────
+
 export interface FitScoreResult {
-  total: number;
+  total: number; // 0-100
   breakdown: {
     skills: number;
     experience: number;

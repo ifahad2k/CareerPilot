@@ -1,14 +1,10 @@
-# CareerPilot — Your Agentic Career Co-pilot
+# CareerPilot v2 — Your AI Career Co-pilot
 
 > **Every AI output is grounded in your actual CV. No agent fabricates experience. If it's not in the CV, the AI says so.**
 
-CareerPilot is an end-to-end agentic career co-pilot that knows you personally — your CV is the single source of truth for every AI response, recommendation, score, and cover letter.
+CareerPilot v2 is an end-to-end AI career co-pilot that knows you personally — your CV is the single source of truth for every AI response, recommendation, score, and cover letter.
 
-## 🎯 Live Demo
-
-**URL:** [https://careerpilot.vercel.app](https://careerpilot.vercel.app)
-
-Demo credentials: `demo@careerpilot.io` / `password123`
+**v2 Updates:** Migrated to Firebase + Gemini + Adzuna (free) for cost reduction and simplicity.
 
 ---
 
@@ -24,7 +20,7 @@ Demo credentials: `demo@careerpilot.io` / `password123`
 ┌─────────────────────────────────────────────────────────────────┐
 │                    RAG CORE (Single Source of Truth)            │
 │                                                                 │
-│  Chunk Embeddings (OpenAI)  →  pgvector (Supabase)             │
+│  Chunk Embeddings (Gemini)  →  Firestore (768-dim vectors)     │
 │                                                                 │
 │  Query → Embed Query → Cosine Similarity → Top-K Chunks        │
 │  Every agent call retrieves relevant CV context FIRST          │
@@ -36,9 +32,8 @@ Demo credentials: `demo@careerpilot.io` / `password123`
 │  Agent       │  │  Chat (RAG)  │ │  Score   │ │  Nudge Agent │
 │              │  │              │ │  Engine  │ │              │
 │  Tool calls: │  │  - Gap Anal. │ │          │ │  - Kanban    │
-│  JSearch API │  │  - Roadmap   │ │  Vector  │ │  - Calendar  │
-│  Adzuna API  │  │  - Cover Ltr  │ │  Cosine  │ │  - Goals     │
-│  Web Search  │  │  - Readiness  │ │  Scoring │ │  - AI Nudge  │
+│  Adzuna API  │  │  - Roadmap   │ │  Cosine  │ │  - Calendar  │
+│  (free)      │  │  - Cover Ltr │ │  Scoring │ │  - Goals     │
 └──────────────┘  └──────────────┘ └──────────┘ └──────────────┘
            └─────────────────┴──────────────┴───────────────┘
                                  │
@@ -48,8 +43,46 @@ Demo credentials: `demo@careerpilot.io` / `password123`
 │                                                                 │
 │  Dashboard  │  Job Cards  │  Chat UI  │  Kanban  │  Calendar   │
 │             │             │           │          │             │
-│                    Supabase (Auth + Postgres + pgvector)         │
+│                    Firebase (Auth + Firestore)                  │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🏗️ Architecture Decisions (v2)
+
+### Tech Stack Changes
+
+| Component | v1 | v2 |
+|-----------|----|----|
+| Auth | Supabase Auth | Firebase Auth |
+| Database | Supabase PostgreSQL | Firestore |
+| LLM | Anthropic Claude | Gemini |
+| Embeddings | OpenAI (1536-dim) | Gemini text-embedding-004 (768-dim) |
+| Vector Search | pgvector SQL | In-memory cosine similarity |
+| Job API | JSearch (RapidAPI) | Adzuna (free) |
+| AI SDK | Vercel AI + Anthropic | @google/generative-ai |
+
+### Data Flow (RAG Core v2)
+
+```
+User uploads CV (PDF/DOCX)
+    ↓
+lib/cv/parser.ts extracts text
+    ↓
+lib/cv/preprocessor.ts cleans text
+    ↓
+lib/cv/chunker.ts splits into sections
+    ↓
+lib/cv/embedder.ts creates embeddings (Gemini 768-dim)
+    ↓
+Stored in Firestore (cvChunks collection)
+    ↓
+User query → lib/ai/rag.ts → in-memory cosine similarity
+    ↓
+Top-K chunks injected into Gemini system prompt
+    ↓
+AI response grounded in actual CV data
 ```
 
 ---
@@ -59,112 +92,65 @@ Demo credentials: `demo@careerpilot.io` / `password123`
 ```
 careerpilot/
 ├── app/
-│   ├── (auth)/                    # Authentication routes
+│   ├── (auth)/
 │   │   ├── login/page.tsx
 │   │   └── signup/page.tsx
-│   ├── (dashboard)/               # Protected dashboard routes
+│   ├── (dashboard)/
 │   │   ├── layout.tsx            # Sidebar + nav shell
-│   │   ├── page.tsx              # Dashboard home (stats)
+│   │   ├── page.tsx              # Dashboard home
 │   │   ├── jobs/page.tsx         # Job Hunter
 │   │   ├── assistant/page.tsx    # AI Chat
-│   │   ├── profile/page.tsx       # CV upload + profile
+│   │   ├── profile/page.tsx       # CV upload
 │   │   └── tracker/
 │   │       ├── kanban/page.tsx
 │   │       ├── calendar/page.tsx
 │   │       └── goals/page.tsx
-│   └── api/                       # API Routes
+│   └── api/
 │       ├── cv/
-│       │   ├── upload/route.ts    # POST: parse + embed CV
-│       │   └── chunks/route.ts    # GET: list user chunks
-│       ├── jobs/search/route.ts   # POST: job search agent
-│       ├── fit-score/route.ts     # POST: compute fit score
-│       ├── chat/route.ts           # POST: streaming AI chat
-│       ├── cover-letter/route.ts   # POST: generate cover letter
-│       ├── roadmap/route.ts       # POST: generate roadmap
-│       └── nudge/route.ts         # POST: AI proactive nudge
+│       │   ├── upload/route.ts
+│       │   └── chunks/route.ts
+│       ├── jobs/search/route.ts
+│       ├── fit-score/route.ts
+│       ├── chat/route.ts
+│       ├── cover-letter/route.ts
+│       ├── roadmap/route.ts
+│       └── nudge/route.ts
 │
 ├── components/
 │   ├── ui/                        # shadcn components
 │   ├── layout/
-│   │   ├── Sidebar.tsx
-│   │   └── DashboardHeader.tsx
 │   ├── cv/
-│   │   ├── CVUploader.tsx
-│   │   └── CVSectionViewer.tsx
 │   ├── jobs/
-│   │   ├── JobCard.tsx
-│   │   ├── JobSearchBar.tsx
-│   │   └── FitScoreBadge.tsx
 │   ├── chat/
-│   │   ├── ChatInterface.tsx
-│   │   ├── ChatMessage.tsx
-│   │   └── RAGSourcePanel.tsx     # Shows CV chunks used
 │   ├── tracker/
-│   │   ├── KanbanBoard.tsx
-│   │   ├── KanbanCard.tsx
-│   │   ├── CalendarView.tsx
-│   │   └── GoalCard.tsx
 │   └── dashboard/
-│       ├── StatsGrid.tsx
-│       ├── ProgressBar.tsx
-│       └── NudgeCard.tsx
 │
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts              # Browser Supabase client
-│   │   ├── server.ts              # Server Supabase client
-│   │   └── middleware.ts         # Auth middleware
+│   ├── firebase/                  # Firebase Auth + Admin
+│   │   ├── client.ts
+│   │   ├── admin.ts
+│   │   └── auth.ts
 │   ├── ai/
-│   │   ├── rag.ts                 # Core RAG query function
-│   │   ├── embeddings.ts         # OpenAI embed util
-│   │   ├── prompts.ts             # All system prompts
-│   │   ├── tools.ts               # Agent tool definitions
+│   │   ├── rag.ts                 # Core RAG function
+│   │   ├── embeddings.ts         # Gemini embed util
+│   │   ├── cosine.ts              # In-memory similarity
+│   │   ├── prompts.ts             # System prompts
+│   │   ├── tools.ts               # Agent tools
 │   │   └── fitScore.ts            # Fit score engine
 │   ├── cv/
-│   │   ├── parser.ts              # PDF/DOCX → raw text
-│   │   ├── chunker.ts             # Section-aware chunking
-│   │   └── embedder.ts           # Chunk → embed → pgvector
+│   │   ├── parser.ts              # PDF/DOCX → text
+│   │   ├── chunker.ts             # Section chunking
+│   │   ├── preprocessor.ts        # Text cleaning
+│   │   └── embedder.ts           # Chunk → embed
 │   └── jobs/
-│       └── jsearch.ts             # JSearch API wrapper
+│       └── adzuna.ts              # Adzuna API wrapper
 │
 ├── types/
-│   └── index.ts                   # All shared TypeScript types
+│   └── index.ts                   # Shared TypeScript types
 │
-├── middleware.ts                  # Auth middleware (Supabase)
-├── schema.sql                     # Supabase database schema
-├── .env.example                   # Environment template
+├── .env.example
+├── .gitignore
 └── package.json
-```
-
----
-
-## 🗄️ Database Schema
-
-### Tables
-
-| Table | Purpose |
-|-------|---------|
-| `profiles` | User profile with target role/location |
-| `cvs` | Uploaded CV files with parsed sections |
-| `cv_chunks` | **RAG Vector Store** — embedded CV chunks |
-| `applications` | Kanban application tracking |
-| `goals` | Career goals with deadlines |
-| `todos` | Tasks linked to goals |
-| `chat_sessions` | Chat session metadata |
-| `chat_messages` | Full conversation history (session memory) |
-| `roadmaps` | Generated learning roadmaps |
-
-### Vector Search
-
-pgvector enables semantic search over CV chunks:
-
-```sql
--- Match relevant CV chunks to a query
-SELECT * FROM match_cv_chunks(
-  query_embedding => '[1536-dim vector]',
-  match_user_id => 'user-uuid',
-  match_count => 5
-);
 ```
 
 ---
@@ -172,7 +158,7 @@ SELECT * FROM match_cv_chunks(
 ## 🧩 Four Pillars
 
 ### Pillar 1 — Job Hunter Agent
-- Live job search via JSearch API (RapidAPI)
+- Live job search via Adzuna API (free, no rate limits)
 - Fit score computed **programmatically** using vector cosine similarity
 - Explains WHY each job matches — citing specific CV details
 - No fabricated listings — only real results from API
@@ -203,16 +189,15 @@ SELECT * FROM match_cv_chunks(
 |-------|------------|---------|
 | **Frontend** | Next.js 14 (App Router) | Server actions, streaming, file-based routing |
 | **Styling** | Tailwind CSS + shadcn/ui | Fast UI, accessible components |
-| **LLM Provider** | Anthropic Claude Sonnet 4 | Tool-calling, streaming, structured output |
-| **Embeddings** | OpenAI `text-embedding-3-small` | 1536-dim vectors, $0.02/1M tokens |
-| **Vector DB** | Supabase pgvector | Free tier, SQL + vector in one DB |
-| **Auth + DB** | Supabase | Postgres, RLS, built-in auth |
-| **PDF Parsing** | `pdf-parse` | Serverless-compatible PDF extraction |
-| **DOCX Parsing** | `mammoth` | Best DOCX → text conversion |
-| **AI SDK** | Vercel AI SDK | Streaming, tool-calling, multi-provider |
-| **Job Search** | JSearch API (RapidAPI) | Rich job data, free tier 500 req/mo |
-| **Calendar** | Custom React + `date-fns` | Full control, lightweight |
-| **Deployment** | Vercel | Free hobby, CI/CD from GitHub |
+| **Auth** | Firebase Auth | User authentication |
+| **Database** | Firestore | NoSQL document store |
+| **LLM** | Gemini 2.0 Flash | Text generation, tool-calling |
+| **Embeddings** | Gemini text-embedding-004 | 768-dim vectors, free tier |
+| **Vector Search** | In-memory cosine similarity | RAG chunk retrieval |
+| **PDF Parsing** | `pdf-parse` | Serverless PDF extraction |
+| **DOCX Parsing** | `mammoth` | DOCX → text conversion |
+| **Job Search** | Adzuna API | Free job listings |
+| **Calendar** | React + `date-fns` | Lightweight date handling |
 
 ---
 
@@ -236,17 +221,16 @@ SELECT * FROM match_cv_chunks(
 ### Prerequisites
 
 - Node.js 18+
-- Supabase account (free)
-- OpenAI API key
-- Anthropic API key
-- JSearch API key ([RapidAPI](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch), free tier)
+- Firebase project (free)
+- Gemini API key (Google AI Studio, free tier available)
+- Adzuna API keys (free at adzuna.com/developers)
 
 ### Steps
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourname/careerpilot
-cd careerpilot
+git clone https://github.com/ifahad2k/CareerPilot
+cd CareerPilot/careerpilot
 
 # 2. Install dependencies
 npm install
@@ -255,10 +239,11 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your API keys
 
-# 4. Set up Supabase database
-# - Create a new Supabase project
-# - Enable pgvector extension
-# - Run schema.sql in SQL Editor
+# 4. Set up Firebase
+# - Create Firebase project at console.firebase.google.com
+# - Enable Firestore Database
+# - Generate service account key (Project Settings > Service Accounts)
+# - Save as service-account.json in project root (gitignored)
 
 # 5. Start development server
 npm run dev
@@ -270,101 +255,48 @@ npm run dev
 
 ## 📊 Fit Score Algorithm
 
-The fit score is computed **programmatically** — not estimated by the LLM:
+The fit score is computed **programmatically** using cosine similarity:
 
 ```typescript
-// 1. Embed job description
-const jdEmbedding = await openai.embeddings.create({
-  model: 'text-embedding-3-small',
-  input: jobDescription,
-});
+// 1. Embed job description with Gemini
+const jdEmbedding = await embedText(jobDescription);
 
-// 2. Compute similarity per CV section
+// 2. Score each CV section
 const sections = ['skills', 'experience', 'education'];
 for (const section of sections) {
-  const { data: chunks } = await supabase.rpc('match_cv_chunks', {
-    query_embedding: jdEmbedding,
-    match_user_id: userId,
-    match_count: 3,
-    filter_section: section,
-  });
-  scores[section] = avg(chunks.map(c => c.similarity));
+  const chunks = cvChunks.filter(c => c.section === section);
+  scores[section] = avg(chunks.map(c => cosineSimilarity(jdEmbedding, c.embedding)));
 }
 
-// 3. Weighted total
-// Skills: 45%, Experience: 40%, Education: 15%
+// 3. Weighted total (Skills: 45%, Experience: 40%, Education: 15%)
 total = scores.skills * 0.45 + scores.experience * 0.40 + scores.education * 0.15;
 ```
 
 ---
 
-## 🎨 UI Design System
+## ❓ FAQ
 
-### Layout
+### Q: Why switch from Supabase/PostgreSQL to Firestore?
+Firestore is a managed NoSQL database that eliminates the need for self-hosted vector extensions. Combined with in-memory cosine similarity, this reduces infrastructure complexity and costs significantly.
 
-```
-┌─────────────────────────────────────────────────┐
-│  SIDEBAR (240px fixed)   │  MAIN CONTENT AREA   │
-│                          │                      │
-│  🚀 CareerPilot          │  [Page Content]      │
-│                          │                      │
-│  ── MAIN ──              │                      │
-│  📊 Dashboard            │                      │
-│  🔍 Job Hunter           │                      │
-│  💬 AI Assistant         │                      │
-│  👤 My Profile           │                      │
-│                          │                      │
-│  ── TRACKER ──           │                      │
-│  📋 Kanban               │                      │
-│  📅 Calendar             │                      │
-│  🎯 Goals                │                      │
-│                          │                      │
-│  ── ACCOUNT ──           │                      │
-│  Settings / Logout       │                      │
-└─────────────────────────────────────────────────┘
-```
+### Q: Why use Gemini instead of Claude/GPT-4?
+Gemini provides both LLM capabilities and embedding generation through a single API. This simplifies authentication, reduces API call overhead, and is more cost-effective for startups. The 768-dimension embeddings are adequate for career/coaching content.
 
-### Color System
+### Q: Why use Adzuna instead of JSearch?
+Adzuna provides free job listings API access with no monthly fees or request limits. JSearch on RapidAPI charges based on usage, making Adzuna a better choice for budget-conscious projects.
 
-```css
---brand:       #3B82F6;  /* Blue — primary actions */
---brand-dark:  #1D4ED8;
---success:     #10B981;  /* Green — high fit scores */
---warning:     #F59E0B;  /* Amber — medium fit scores */
---danger:      #EF4444;  /* Red — low fit scores */
---bg:          #F8FAFC;  /* Page background */
---surface:     #FFFFFF;  /* Card background */
---border:      #E2E8F0;
---text:        #1E293B;
---muted:       #64748B;
-```
+### Q: How does the embedding generation work?
+CV chunks are embedded using Gemini's `text-embedding-004` model (768 dimensions). These vectors are stored in Firestore and retrieved at query time using in-memory cosine similarity for RAG grounding.
 
----
-
-## 📅 Phase Execution Plan
-
-| Phase | Hours | Focus | Status |
-|-------|-------|-------|--------|
-| **Phase 1** | 0–12h | Foundation + RAG Core | 🔴 Critical |
-| **Phase 2** | 12–28h | AI Agents + Intelligence | 🔴 Critical |
-| **Phase 3** | 28–42h | UI + Tracker | 🟡 High |
-| **Phase 4** | 42–56h | Polish + Deploy + Bonus | 🟢 Medium |
-
----
-
-## ⚠️ Known Risks & Mitigations
-
-| Risk | Mitigation |
-|------|------------|
-| JSearch API rate limit (500/mo) | Cache results in Supabase; add Adzuna fallback |
-| PDF parsing fails on complex layouts | Fall back to `pdfjs-dist`; warn user |
-| Vercel file size limit (4.5MB) | Validate file size; clear error message |
-| LLM returns non-JSON | Retry once; strip markdown fences |
-| pgvector not enabled | Prominent step in setup docs |
-| Demo CV not pre-loaded | Seed script for demo user on deploy |
+### Q: What happens to my old data?
+If you were using v1 (Supabase), you'll need to re-upload your CV after migrating to v2. The new Firebase/Firestore structure is incompatible with the old Supabase schema.
 
 ---
 
 ## 📄 License
 
-MIT License — Codesprint 2026 · Powered by Poridhi.io
+MIT License — feel free to use this for your own career tools.
+
+---
+
+_Built with 🔥 by [Ifahad Khan](https://github.com/ifahad2k)_

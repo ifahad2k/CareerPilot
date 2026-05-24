@@ -1,4 +1,4 @@
-# CareerPilot — AI Agent Progress Context
+# CareerPilot v2 — AI Agent Progress Context
 
 > **This file is the single source of truth for AI agents working on this project.**
 > **Update this file whenever progress is made.**
@@ -7,12 +7,14 @@
 
 ## 📋 Project Overview
 
-**Name:** CareerPilot — Your Agentic Career Co-pilot
+**Name:** CareerPilot v2 — Your AI Career Co-pilot
 **GitHub:** https://github.com/ifahad2k/CareerPilot
 **Framework:** Next.js 14 (App Router)
 **Last Updated:** May 24, 2026
 
 **Core Mission:** An AI-powered career assistant where every AI output is grounded in the user's actual CV. The CV is the single source of truth for recommendations, scores, and cover letters.
+
+**v2 Changes:** Migrated from Supabase + OpenAI/Anthropic to Firebase + Gemini + Adzuna for cost reduction and simplicity.
 
 ---
 
@@ -33,10 +35,9 @@
 
 | Task | Status | File(s) |
 |------|--------|---------|
-| Supabase schema | ✅ Done | `schema.sql` (complete with RLS) |
-| pgvector integration | ✅ Done | `match_cv_chunks()` function |
-| Supabase client setup | ✅ Done | `lib/supabase/client.ts`, `server.ts`, `middleware.ts` |
+| Firebase configuration | ✅ Done | `lib/firebase/client.ts`, `admin.ts`, `auth.ts` |
 | Environment template | ✅ Done | `.env.example` |
+| Firestore collections | ✅ Scaffolded | cvChunks, applications, goals, todos, chatSessions |
 
 ### Phase 3: API Routes (100%)
 
@@ -52,7 +53,7 @@
 | `/api/nudge` | POST | ✅ Scaffolded | `app/api/nudge/route.ts` |
 | `/api/stats` | GET | ✅ Scaffolded | `app/api/stats/route.ts` |
 
-### Phase 4: Pages & Components (100%)
+### Phase 5: Pages & Components (100%)
 
 | Page/Component | Status | File |
 |----------------|--------|------|
@@ -67,39 +68,25 @@
 | Calendar tracker | ✅ Scaffolded | `app/(dashboard)/tracker/calendar/page.tsx` |
 | Goals tracker | ✅ Scaffolded | `app/(dashboard)/tracker/goals/page.tsx` |
 
-| Component | Status | File |
-|-----------|--------|------|
-| Sidebar | ✅ Scaffolded | `components/layout/Sidebar.tsx` |
-| DashboardHeader | ✅ Scaffolded | `components/layout/DashboardHeader.tsx` |
-| CVUploader | ✅ Scaffolded | `components/cv/CVUploader.tsx` |
-| CVSectionViewer | ✅ Scaffolded | `components/cv/CVSectionViewer.tsx` |
-| JobCard | ✅ Scaffolded | `components/jobs/JobCard.tsx` |
-| JobSearchBar | ✅ Scaffolded | `components/jobs/JobSearchBar.tsx` |
-| FitScoreBadge | ✅ Scaffolded | `components/jobs/FitScoreBadge.tsx` |
-| ChatInterface | ✅ Scaffolded | `components/chat/ChatInterface.tsx` |
-| ChatMessage | ✅ Scaffolded | `components/chat/ChatMessage.tsx` |
-| RAGSourcePanel | ✅ Scaffolded | `components/chat/RAGSourcePanel.tsx` |
-| KanbanBoard | ✅ Scaffolded | `components/tracker/KanbanBoard.tsx` |
-| KanbanCard | ✅ Scaffolded | `components/tracker/KanbanCard.tsx` |
-| CalendarView | ✅ Scaffolded | `components/tracker/CalendarView.tsx` |
-| GoalCard | ✅ Scaffolded | `components/tracker/GoalCard.tsx` |
-| StatsGrid | ✅ Scaffolded | `components/dashboard/StatsGrid.tsx` |
-| ProgressBar | ✅ Scaffolded | `components/dashboard/ProgressBar.tsx` |
-| NudgeCard | ✅ Scaffolded | `components/dashboard/NudgeCard.tsx` |
-
-### Phase 5: Library/Logic Files (100%)
+### Phase 4: Library/Logic Files (100%)
 
 | Library | Status | File |
 |---------|--------|------|
-| RAG core function | ✅ Scaffolded | `lib/ai/rag.ts` |
-| Embeddings utility | ✅ Scaffolded | `lib/ai/embeddings.ts` |
-| System prompts | ✅ Scaffolded | `lib/ai/prompts.ts` |
-| Agent tools | ✅ Scaffolded | `lib/ai/tools.ts` |
-| Fit score engine | ✅ Scaffolded | `lib/ai/fitScore.ts` |
-| CV parser | ✅ Scaffolded | `lib/cv/parser.ts` |
-| CV chunker | ✅ Scaffolded | `lib/cv/chunker.ts` |
-| CV embedder | ✅ Scaffolded | `lib/cv/embedder.ts` |
-| JSearch API wrapper | ✅ Scaffolded | `lib/jobs/jsearch.ts` |
+| RAG core function | ✅ Done | `lib/ai/rag.ts` |
+| Embeddings (Gemini) | ✅ Done | `lib/ai/embeddings.ts` |
+| Cosine similarity | ✅ Done | `lib/ai/cosine.ts` |
+| System prompts | ✅ Done | `lib/ai/prompts.ts` |
+| AI tools | ✅ Done | `lib/ai/tools.ts` |
+| Fit score engine | ✅ Done | `lib/ai/fitScore.ts` |
+| withAI wrapper | ✅ Done | `lib/ai/withAI.ts` |
+| CV parser | ✅ Done | `lib/cv/parser.ts` |
+| CV chunker | ✅ Done | `lib/cv/chunker.ts` |
+| CV embedder | ✅ Done | `lib/cv/embedder.ts` |
+| CV preprocessor | ✅ Done | `lib/cv/preprocessor.ts` |
+| Adzuna API wrapper | ✅ Done | `lib/jobs/adzuna.ts` |
+| Firebase client | ✅ Done | `lib/firebase/client.ts` |
+| Firebase admin | ✅ Done | `lib/firebase/admin.ts` |
+| Firebase auth | ✅ Done | `lib/firebase/auth.ts` |
 
 ### Phase 6: Documentation (100%)
 

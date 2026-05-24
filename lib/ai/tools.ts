@@ -1,9 +1,14 @@
 // ============================================================
-// CareerPilot — Agent Tool Definitions
+// CareerPilot v2 — AI Tool Functions
 // ============================================================
 // 
-// Defines tools for the Claude agent:
-// - search_jobs: Real job search via JSearch API
+// Tool functions for Gemini LLM:
+// - searchJobs: Job search via Adzuna API
+// - analyzeCV: Parse and analyze uploaded CV
+// - generateRoadmap: Create learning roadmap
 // ============================================================
 
-export {};
+import { searchJobs, SearchJobsParams } from '@/lib/jobs/adzuna';
+
+export { searchJobs };
+export type { SearchJobsParams };

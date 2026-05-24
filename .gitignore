@@ -1,5 +1,5 @@
 # ============================================================
-# CareerPilot — Git Ignore
+# CareerPilot v2 — Git Ignore
 # ============================================================
 
 # Dependencies
@@ -19,6 +19,11 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Firebase
+.firebase/
+*firebase*.json
+service-account*.json
 
 # Debug logs
 npm-debug.log*
