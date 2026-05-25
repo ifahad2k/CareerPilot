@@ -347,3 +347,21 @@ When implementing a feature:
 
 *Last updated by: AI Agent | Date: May 25, 2026*
 *Update this file before making any changes to keep other agents informed.*
+## Update Log - May 25, 2026 (Dashboard Data Integrity)
+
+### Completed
+- Replaced hardcoded dashboard mock stats with live stats fetched from `/api/stats`.
+- Implemented `GET /api/stats` in `app/api/stats/route.ts` to compute real metrics from Firestore applications.
+- Ensured fresh/new users see zeroed metrics instead of random placeholder numbers.
+- Added fallback auth token support in `lib/firebase/auth.ts` (Bearer header or `fb-token` cookie).
+- Added `export const dynamic = 'force-dynamic'` for `/api/stats` to avoid static evaluation on authenticated route.
+
+### Files Updated
+- `app/dashboard/page.tsx`
+- `app/api/stats/route.ts`
+- `lib/firebase/auth.ts`
+
+### Deployment
+- Production deployment completed via Vercel CLI.
+- Deployment ID: `dpl_Dkb3vKoy3DeALkcuEbu8f1ZbFfgy`
+- Production URL: `https://careerpilot-theta.vercel.app`

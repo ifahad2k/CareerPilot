@@ -19,9 +19,11 @@ import { adminAuth } from './admin';
 export async function verifyAuthToken(req: NextRequest): Promise<string | null> {
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return null;
-
-    const token = authHeader.slice(7); // Strip "Bearer "
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+    const cookieToken = req.cookies.get('fb-token')?.value ?? null;
+    const token = bearerToken || cookieToken;
     if (!token) return null;
 
     const decoded = await adminAuth.verifyIdToken(token);

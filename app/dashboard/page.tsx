@@ -2,19 +2,9 @@
 // ============================================================
 // Page: Dashboard Home
 // ============================================================
-// 
-// Design: DESIGN.md Sections 2-4
-// Statistics overview with:
-// - Applications sent this week
-// - Applications by status
-// - Current streak
-// - Roadmap progress
-// - AI nudge banner (when inactive)
-// ============================================================
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFirebaseAuth } from "@/components/Providers";
-import { useRouter } from "next/navigation";
 import {
   Briefcase,
   CheckCircle2,
@@ -25,27 +15,91 @@ import {
   Flame,
 } from "lucide-react";
 
-// Mock data for demonstration
-const mockStats = {
-  applicationsThisWeek: 12,
-  totalApplications: 47,
-  interviewing: 5,
-  offers: 1,
-  streak: 7,
-  avgFitScore: 78,
+interface DashboardActivity {
+  text: string;
+  time: string;
+}
+
+interface DashboardStats {
+  applicationsThisWeek: number;
+  totalApplications: number;
+  interviewing: number;
+  offers: number;
+  rejected: number;
+  applied: number;
+  streak: number;
+  avgFitScore: number;
+  recentActivity: DashboardActivity[];
+}
+
+const EMPTY_STATS: DashboardStats = {
+  applicationsThisWeek: 0,
+  totalApplications: 0,
+  interviewing: 0,
+  offers: 0,
+  rejected: 0,
+  applied: 0,
+  streak: 0,
+  avgFitScore: 0,
+  recentActivity: [],
 };
 
 export default function DashboardPage() {
   const { user, loading } = useFirebaseAuth();
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>(EMPTY_STATS);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    async function fetchStats() {
+      if (!user) return;
+
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/stats", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          setStats(EMPTY_STATS);
+          return;
+        }
+
+        const data = await res.json();
+        setStats({
+          applicationsThisWeek: Number(data.applicationsThisWeek ?? 0),
+          totalApplications: Number(data.totalApplications ?? 0),
+          interviewing: Number(data.interviewing ?? 0),
+          offers: Number(data.offers ?? 0),
+          rejected: Number(data.rejected ?? 0),
+          applied: Number(data.applied ?? 0),
+          streak: Number(data.streak ?? 0),
+          avgFitScore: Number(data.avgFitScore ?? 0),
+          recentActivity: Array.isArray(data.recentActivity) ? data.recentActivity : [],
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+        setStats(EMPTY_STATS);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+
+    if (mounted && user) {
+      fetchStats();
+    } else if (mounted && !user) {
+      setStatsLoading(false);
+    }
+  }, [mounted, user]);
+
   // Skeleton loading state
-  if (!mounted || loading) {
+  if (!mounted || loading || statsLoading) {
     return (
       <div className="p-6">
         <div className="skeleton h-8 w-48 mb-6 rounded-lg" />
@@ -58,14 +112,16 @@ export default function DashboardPage() {
     );
   }
 
-  // Redirect if not authenticated (handled by layout, but safety check)
   if (!user) {
     return null;
   }
 
+  const weeklyGoalTarget = 5;
+  const weeklyGoalProgress = Math.min(stats.applicationsThisWeek, weeklyGoalTarget);
+  const weeklyGoalPercent = Math.round((weeklyGoalProgress / weeklyGoalTarget) * 100);
+
   return (
     <div className="p-6">
-      {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -73,48 +129,41 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid - 4 columns on desktop, 2 on tablet, 1 on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Applications This Week */}
         <StatCard
           icon={Briefcase}
           label="Applications"
-          value={mockStats.applicationsThisWeek}
-          subtext={`${mockStats.totalApplications} total`}
+          value={stats.applicationsThisWeek}
+          subtext={`${stats.totalApplications} total`}
           color="blue"
         />
 
-        {/* Interviewing */}
         <StatCard
           icon={Clock}
           label="Interviewing"
-          value={mockStats.interviewing}
-          subtext={`${mockStats.offers} offer${mockStats.offers !== 1 ? "s" : ""}`}
+          value={stats.interviewing}
+          subtext={`${stats.offers} offer${stats.offers !== 1 ? "s" : ""}`}
           color="purple"
         />
 
-        {/* Fit Score */}
         <StatCard
           icon={TrendingUp}
           label="Avg Fit Score"
-          value={`${mockStats.avgFitScore}%`}
+          value={`${stats.avgFitScore}%`}
           subtext="Across all jobs"
           color="green"
         />
 
-        {/* Streak */}
         <StatCard
           icon={Flame}
           label="Streak"
-          value={`${mockStats.streak} days`}
-          subtext="Keep it going!"
+          value={`${stats.streak} day${stats.streak !== 1 ? "s" : ""}`}
+          subtext={stats.streak > 0 ? "Keep it going!" : "Start your streak"}
           color="orange"
         />
       </div>
 
-      {/* Quick Actions Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* AI Nudge Card */}
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -123,16 +172,14 @@ export default function DashboardPage() {
             <div className="flex-1">
               <h3 className="font-semibold text-base">AI Career Nudge</h3>
               <p className="text-blue-100 text-sm mt-1 leading-relaxed">
-                Based on your profile, there are 3 new ML internships in Dhaka matching your skills.
+                {stats.totalApplications === 0
+                  ? "You have no tracked applications yet. Add your first job in Kanban or Job Hunter."
+                  : `You have ${stats.interviewing} active interview${stats.interviewing !== 1 ? "s" : ""}. Keep your momentum this week.`}
               </p>
-              <button className="mt-3 bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors">
-                View Jobs
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Goal Progress Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -146,18 +193,19 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-600">Progress</span>
-              <span className="font-semibold text-slate-800">3/5</span>
+              <span className="font-semibold text-slate-800">
+                {weeklyGoalProgress}/{weeklyGoalTarget}
+              </span>
             </div>
             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-green-500 rounded-full transition-all duration-700"
-                style={{ width: "60%" }}
+                style={{ width: `${weeklyGoalPercent}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Recent Activity Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -169,55 +217,32 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="space-y-3">
-            <ActivityItem
-              text="Applied to Software Engineer at TechCorp"
-              time="2 hours ago"
-            />
-            <ActivityItem
-              text="Interview scheduled with DataAI Inc."
-              time="Yesterday"
-            />
-            <ActivityItem
-              text="CV updated with new project"
-              time="2 days ago"
-            />
+            {stats.recentActivity.length > 0 ? (
+              stats.recentActivity.map((item, index) => (
+                <ActivityItem key={`${item.text}-${index}`} text={item.text} time={item.time} />
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">No activity yet.</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Application Status Breakdown */}
       <div className="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <h2 className="text-lg font-semibold text-slate-800 mb-4">
           Application Pipeline
         </h2>
         <div className="grid grid-cols-4 gap-4">
-          <PipelineColumn
-            label="Applied"
-            count={15}
-            color="blue"
-          />
-          <PipelineColumn
-            label="Interviewing"
-            count={mockStats.interviewing}
-            color="purple"
-          />
-          <PipelineColumn
-            label="Offers"
-            count={mockStats.offers}
-            color="green"
-          />
-          <PipelineColumn
-            label="Rejected"
-            count={8}
-            color="slate"
-          />
+          <PipelineColumn label="Applied" count={stats.applied} color="blue" />
+          <PipelineColumn label="Interviewing" count={stats.interviewing} color="purple" />
+          <PipelineColumn label="Offers" count={stats.offers} color="green" />
+          <PipelineColumn label="Rejected" count={stats.rejected} color="slate" />
         </div>
       </div>
     </div>
   );
 }
 
-// Stat Card Component
 function StatCard({
   icon: Icon,
   label,
@@ -256,7 +281,6 @@ function StatCard({
   );
 }
 
-// Activity Item Component
 function ActivityItem({ text, time }: { text: string; time: string }) {
   return (
     <div className="flex items-start gap-3">
@@ -269,7 +293,6 @@ function ActivityItem({ text, time }: { text: string; time: string }) {
   );
 }
 
-// Pipeline Column Component
 function PipelineColumn({
   label,
   count,
@@ -293,4 +316,3 @@ function PipelineColumn({
     </div>
   );
 }
-
