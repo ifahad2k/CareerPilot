@@ -3,6 +3,14 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
+// ============================================================
+// Firebase Client SDK — Browser-side initialization
+// ============================================================
+// Uses getApps().length guard to prevent re-initialization.
+// Storage is exported for future use but may not be enabled
+// on the free Firebase plan.
+// ============================================================
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -12,17 +20,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Singleton pattern for client-side Firebase
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
+// Singleton — safe for SSR and client
+const app: FirebaseApp = getApps().length
+  ? getApps()[0]
+  : initializeApp(firebaseConfig);
 
-if (typeof window !== 'undefined') {
-  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-}
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
 export { app, auth, db, storage };

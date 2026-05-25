@@ -1,9 +1,14 @@
-import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
-// Initialize Firebase Admin SDK (server-side only)
-// This should NEVER be imported in client components
-let adminDb: Firestore;
+// ============================================================
+// Firebase Admin SDK — Server-side only
+// ============================================================
+// This module must NEVER be imported in client components.
+// Uses getApps().length guard to prevent re-initialization.
+// Exports both Firestore (adminDb) and Auth (adminAuth).
+// ============================================================
 
 if (!getApps().length) {
   initializeApp({
@@ -15,6 +20,7 @@ if (!getApps().length) {
   });
 }
 
-adminDb = getFirestore();
+const adminDb = getFirestore();
+const adminAuth = getAuth();
 
-export { adminDb };
+export { adminDb, adminAuth };
