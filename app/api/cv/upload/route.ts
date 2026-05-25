@@ -15,6 +15,8 @@ import { embedTexts } from '@/lib/ai/embeddings';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { verifyAuthToken } from '@/lib/firebase/auth';
 
+export const dynamic = 'force-dynamic';
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 /**

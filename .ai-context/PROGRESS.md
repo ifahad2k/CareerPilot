@@ -365,3 +365,41 @@ When implementing a feature:
 - Production deployment completed via Vercel CLI.
 - Deployment ID: `dpl_Dkb3vKoy3DeALkcuEbu8f1ZbFfgy`
 - Production URL: `https://careerpilot-theta.vercel.app`
+
+## Update Log - May 25, 2026 (API Completion + Auth Hardening)
+
+### Completed in this pass
+- Implemented missing API route: `PATCH/DELETE /api/applications/[id]`.
+- Standardized goals/events auth to Firebase token verification via `verifyAuthToken()`.
+- Added ownership checks for `goals/[id]` and `events/[id]` before update/delete.
+- Implemented previously placeholder APIs:
+  - `POST /api/chat`
+  - `POST /api/fit-score`
+  - `POST /api/cover-letter`
+  - `POST /api/roadmap`
+  - `GET /api/nudge`
+- Added dynamic route hints (`force-dynamic`) for auth-dependent API handlers.
+- Replaced legacy `/dashboard/tracker/*` placeholders with redirects to canonical routes.
+- Fixed logout behavior by clearing `fb-token` cookie client-side before redirecting to `/login`.
+- Verified with production build (`npm run build`) passing locally.
+
+### Files Updated
+- `app/api/applications/[id]/route.ts`
+- `app/api/goals/route.ts`
+- `app/api/goals/[id]/route.ts`
+- `app/api/events/route.ts`
+- `app/api/events/[id]/route.ts`
+- `app/api/chat/route.ts`
+- `app/api/fit-score/route.ts`
+- `app/api/cover-letter/route.ts`
+- `app/api/roadmap/route.ts`
+- `app/api/nudge/route.ts`
+- `app/api/assistant/chat/route.ts`
+- `app/api/cv/upload/route.ts`
+- `app/api/cv/chunks/route.ts`
+- `app/api/jobs/search/route.ts`
+- `app/dashboard/tracker/page.tsx`
+- `app/dashboard/tracker/kanban/page.tsx`
+- `app/dashboard/tracker/calendar/page.tsx`
+- `app/dashboard/tracker/goals/page.tsx`
+- `components/layout/Sidebar.tsx`

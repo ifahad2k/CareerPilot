@@ -1,9 +1,5 @@
-"use client";
-// ============================================================
-// Page: Tracker Index (redirects to Kanban)
-// ============================================================
+import { redirect } from "next/navigation";
 
 export default function TrackerPage() {
-  return <div>Placeholder</div>;
+  redirect("/dashboard/kanban");
 }
-

@@ -1,15 +1,5 @@
-"use client";
-// ============================================================
-// Page: Goals & To-Dos
-// ============================================================
-// 
-// Pillar 4 — Goals module
-// - Create and manage goals
-// - Link todos to goals
-// - Track completion
-// ============================================================
+import { redirect } from "next/navigation";
 
-export default function GoalsPage() {
-  return <div>Placeholder</div>;
+export default function TrackerGoalsRedirectPage() {
+  redirect("/dashboard/goals");
 }
-

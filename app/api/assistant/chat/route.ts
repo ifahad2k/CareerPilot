@@ -14,6 +14,8 @@ import { verifyAuthToken } from '@/lib/firebase/auth';
 import { queryRAG } from '@/lib/ai/rag';
 import { ChatMessage } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 /**

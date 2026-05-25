@@ -46,6 +46,8 @@ export default function Sidebar() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      document.cookie = "fb-token=; path=/; max-age=0; SameSite=Lax";
+      window.location.href = "/login";
     } catch (error) {
       console.error("Sign out error:", error);
     }

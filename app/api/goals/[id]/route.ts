@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { verifyAuthToken } from '@/lib/firebase/auth';
 
 // ============================================================
 // API: Goals - PATCH/DELETE by ID
@@ -7,18 +8,29 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = await verifyAuthToken(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
+    const goalRef = adminDb.collection('goals').doc(id);
+    const goalDoc = await goalRef.get();
 
-    await adminDb.collection('goals').doc(id).update(body);
+    if (!goalDoc.exists) {
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+
+    const goalData = goalDoc.data();
+    if (goalData?.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    await goalRef.update(body);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -29,16 +41,28 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const userId = await verifyAuthToken(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
-    await adminDb.collection('goals').doc(id).delete();
+    const { id } = params;
+    const goalRef = adminDb.collection('goals').doc(id);
+    const goalDoc = await goalRef.get();
+
+    if (!goalDoc.exists) {
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+
+    const goalData = goalDoc.data();
+    if (goalData?.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    await goalRef.delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {

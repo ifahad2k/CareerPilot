@@ -7,7 +7,6 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuthToken } from '@/lib/firebase/auth';
 
 interface JSearchJob {
   employer_name: string;
@@ -32,9 +31,6 @@ interface JSearchResponse {
  * GET /api/jobs/search?query=...&location=...&page=...
  */
 export async function GET(req: NextRequest) {
-  // Verify auth (optional - allow browsing without login)
-  await verifyAuthToken(req);
-
   const searchParams = req.nextUrl.searchParams;
   const query = searchParams.get('query') || '';
   const location = searchParams.get('location') || '';

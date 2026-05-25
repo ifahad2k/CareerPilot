@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { verifyAuthToken } from '@/lib/firebase/auth';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Get CV chunks for authenticated user
  * GET /api/cv/chunks
