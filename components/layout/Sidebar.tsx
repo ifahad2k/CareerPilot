@@ -34,9 +34,9 @@ const mainNavItems = [
 ];
 
 const trackerNavItems = [
-  { href: "/dashboard/tracker/kanban", icon: Columns, label: "Kanban" },
-  { href: "/dashboard/tracker/calendar", icon: CalendarDays, label: "Calendar" },
-  { href: "/dashboard/tracker/goals", icon: Target, label: "Goals" },
+  { href: "/dashboard/kanban", icon: Columns, label: "Kanban" },
+  { href: "/dashboard/calendar", icon: CalendarDays, label: "Calendar" },
+  { href: "/dashboard/goals", icon: Target, label: "Goals" },
 ];
 
 export default function Sidebar() {

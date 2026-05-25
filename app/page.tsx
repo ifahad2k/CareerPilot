@@ -1,12 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/firebase/auth";
 
-export default async function Home() {
-  const user = await getCurrentUser();
-
-  if (user) {
-    redirect("/dashboard");
-  } else {
-    redirect("/login");
-  }
+// Home redirects to dashboard (middleware handles auth check)
+export default function Home() {
+  redirect("/dashboard");
 }
